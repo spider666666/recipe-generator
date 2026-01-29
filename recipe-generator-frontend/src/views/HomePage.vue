@@ -378,16 +378,16 @@ const generateRecipes = async () => {
 
     const response = await generateRecipesAPI(params)
 
-    // 后端返回格式: { code, message, data: Recipe }
+    // 后端返回格式: { code, message, data: List<Recipe> }
     // 提取实际的菜谱数据并转换为前端格式
-    const recipe = response.data
+    const recipes = response.data
 
     // 获取用户选择的食材名称列表
     const userIngredientNames = selectedIngredients.value.map(ing => ing.name)
 
-    // 转换后端字段名到前端格式
-    const formattedRecipe = {
-      id: recipe.id || Date.now(),
+    // 转换所有食谱的格式
+    const recipesArray = recipes.map(recipe => ({
+      id: recipe.id || Date.now() + Math.random(),
       name: recipe.name,
       cuisine: recipe.cuisineType,  // 后端: cuisineType
       time: recipe.cookingTime,     // 后端: cookingTime
@@ -397,22 +397,19 @@ const generateRecipes = async () => {
       ingredients: recipe.ingredients?.map(ing => ({
         name: ing.name,
         amount: ing.quantity,  // 后端: quantity
-        // 如果后端提供了 hasIngredient 字段则使用，否则根据用户选择判断
-        available: ing.hasIngredient !== undefined
-          ? ing.hasIngredient
-          : userIngredientNames.includes(ing.name)
+        // 根据用户选择判断是否具备
+        available: userIngredientNames.includes(ing.name)
       })) || [],
       steps: recipe.steps || [],
       missingIngredients: recipe.missingIngredients || [],
       matchScore: recipe.matchScore
-    }
+    }))
 
-    // 将单个菜谱包装成数组
-    const recipesArray = [formattedRecipe]
-
-    // 保存到后端历史记录
+    // 保存每个食谱到后端历史记录
     try {
-      await addHistoryAPI(recipe.id)
+      for (const recipe of recipes) {
+        await addHistoryAPI(recipe.id)
+      }
     } catch (err) {
       console.error('保存历史记录失败:', err)
     }
@@ -420,7 +417,7 @@ const generateRecipes = async () => {
     // 保存到全局状态（用于菜谱页面展示）
     localStorage.setItem('current-recipes', JSON.stringify(recipesArray))
 
-    ElMessage.success('食谱生成成功！')
+    ElMessage.success(`成功生成${recipesArray.length}个食谱！`)
 
     // 跳转到菜谱页面
     setTimeout(() => {

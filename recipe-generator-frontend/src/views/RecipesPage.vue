@@ -260,24 +260,9 @@ const saveComment = () => {
 
 // 加入购物清单
 const addToShopping = async (recipe) => {
-  // 判断缺少的食材：使用 available 字段
-  const missingIngredients = recipe.ingredients.filter(ing => {
-    // 如果 available 字段存在，使用它
-    if (typeof ing.available === 'boolean') {
-      return !ing.available
-    }
-    // 默认认为缺少
-    return true
-  })
-
-  if (missingIngredients.length === 0) {
-    ElMessage.info('所有食材都已具备，无需添加到购物清单')
-    return
-  }
-
   try {
     let addedCount = 0
-    for (const ing of missingIngredients) {
+    for (const ing of recipe.ingredients) {
       // 查找食材ID
       const ingredientResponse = await searchIngredientByNameAPI(ing.name)
       if (ingredientResponse.data) {

@@ -209,24 +209,34 @@ const detailVisible = ref(false)
 const currentRecipe = ref(null)
 
 onMounted(() => {
+  // 清除旧的 localStorage 数据
+  localStorage.removeItem('favorites')
+  localStorage.removeItem('recipe-history')
   loadData()
 })
 
 const loadData = async () => {
+  // 先清空数据
+  favorites.value = []
+  history.value = []
+
   try {
     // 加载收藏
     const favResponse = await getFavoritesAPI()
-    if (favResponse.data) {
+    console.log('收藏数据响应:', favResponse)
+    if (favResponse.data && Array.isArray(favResponse.data)) {
       favorites.value = favResponse.data.map(fav => ({
         id: fav.recipeId,
         ...fav.recipe,
         favoritedAt: fav.createTime
       }))
+      console.log('加载了', favorites.value.length, '条收藏记录')
     }
 
     // 加载历史记录
     const historyResponse = await getHistoryAPI()
-    if (historyResponse.data) {
+    console.log('历史记录响应:', historyResponse)
+    if (historyResponse.data && Array.isArray(historyResponse.data)) {
       history.value = historyResponse.data.map(h => ({
         id: h.id,
         recipes: [h.recipe],
@@ -234,9 +244,11 @@ const loadData = async () => {
         ingredients: [],
         filters: {}
       }))
+      console.log('加载了', history.value.length, '条历史记录')
     }
   } catch (error) {
     console.error('加载数据失败:', error)
+    ElMessage.error('加载数据失败: ' + (error.message || '未知错误'))
   }
 }
 

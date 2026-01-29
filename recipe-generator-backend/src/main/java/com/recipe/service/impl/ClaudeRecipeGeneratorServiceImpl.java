@@ -44,18 +44,40 @@ public class ClaudeRecipeGeneratorServiceImpl implements IClaudeRecipeGeneratorS
 
     @Override
     @Transactional
-    public Recipe generateRecipeWithClaude(GenerateRecipeRequest request) {
+    public List<Recipe> generateRecipeWithClaude(GenerateRecipeRequest request) {
         try {
-            //根据请求构建，无所谓
-            String prompt = buildPrompt(request);
-            //todo 硬编码实现
-            String claudeResponse = callClaudeAPI(prompt);
-            //todo 硬编码实现
-            return parseClaudeResponse(claudeResponse, request);
+            List<Recipe> recipes = new ArrayList<>();
+
+            // 生成3个不同的食谱（硬编码）
+            String[] recipeJsons = getHardcodedRecipes();
+
+            for (String recipeJson : recipeJsons) {
+                Recipe recipe = parseClaudeResponse(recipeJson, request);
+                recipes.add(recipe);
+            }
+
+            log.info("成功生成{}个食谱", recipes.size());
+            return recipes;
         } catch (Exception e) {
             log.error("调用Claude API失败", e);
             throw new RuntimeException("生成食谱失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 获取硬编码的食谱数据
+     */
+    private String[] getHardcodedRecipes() {
+        return new String[]{
+            // 食谱1: 西红柿炒鸡蛋
+            "{\"name\":\"西红柿炒鸡蛋\",\"description\":\"经典中式家常菜，口感嫩滑、口味清淡，食材简单易获取，10分钟即可完成，适合烹饪新手\",\"servings\":2,\"ingredients\":[{\"name\":\"西红柿\",\"quantity\":\"2个\",\"isRequired\":true},{\"name\":\"鸡蛋\",\"quantity\":\"3个\",\"isRequired\":true},{\"name\":\"盐\",\"quantity\":\"少许\",\"isRequired\":false},{\"name\":\"食用油\",\"quantity\":\"2勺\",\"isRequired\":false}],\"steps\":[{\"stepNumber\":1,\"description\":\"西红柿洗净，顶部划十字刀，用开水烫10秒剥去外皮，切成小块备用\",\"duration\":3},{\"stepNumber\":2,\"description\":\"鸡蛋打入碗中，加少许盐搅打至出现细腻泡沫，静置2分钟\",\"duration\":2},{\"stepNumber\":3,\"description\":\"锅中倒入食用油，油温烧至六成热（微微冒烟），倒入蛋液快速翻炒至定型，盛出备用\",\"duration\":2},{\"stepNumber\":4,\"description\":\"同一口锅留少许底油，放入西红柿块翻炒，压出西红柿汤汁，炒至软烂\",\"duration\":3},{\"stepNumber\":5,\"description\":\"倒入炒好的鸡蛋，与西红柿翻炒均匀，加少许盐调味，翻炒10秒即可出锅\",\"duration\":2}]}",
+
+            // 食谱2: 土豆炖牛肉
+            "{\"name\":\"土豆炖牛肉\",\"description\":\"营养丰富的家常炖菜，牛肉软烂入味，土豆绵软香甜，汤汁浓郁，适合全家享用\",\"servings\":3,\"ingredients\":[{\"name\":\"牛肉\",\"quantity\":\"500g\",\"isRequired\":true},{\"name\":\"土豆\",\"quantity\":\"2个\",\"isRequired\":true},{\"name\":\"胡萝卜\",\"quantity\":\"1根\",\"isRequired\":true},{\"name\":\"洋葱\",\"quantity\":\"半个\",\"isRequired\":false},{\"name\":\"姜\",\"quantity\":\"3片\",\"isRequired\":false},{\"name\":\"酱油\",\"quantity\":\"2勺\",\"isRequired\":false},{\"name\":\"料酒\",\"quantity\":\"1勺\",\"isRequired\":false}],\"steps\":[{\"stepNumber\":1,\"description\":\"牛肉切块，冷水下锅焯水去血沫，捞出洗净备用\",\"duration\":5},{\"stepNumber\":2,\"description\":\"土豆、胡萝卜去皮切块，洋葱切片，姜切片备用\",\"duration\":5},{\"stepNumber\":3,\"description\":\"锅中热油，放入姜片和洋葱爆香，加入牛肉块翻炒至表面微黄\",\"duration\":3},{\"stepNumber\":4,\"description\":\"加入酱油、料酒翻炒均匀，倒入足量热水，大火烧开后转小火炖40分钟\",\"duration\":40},{\"stepNumber\":5,\"description\":\"加入土豆和胡萝卜块，继续炖20分钟至土豆软烂，大火收汁即可\",\"duration\":20}]}",
+
+            // 食谱3: 青椒肉丝
+            "{\"name\":\"青椒肉丝\",\"description\":\"经典川菜，色泽鲜艳，口感脆嫩，咸鲜微辣，下饭佳品，制作简单快捷\",\"servings\":2,\"ingredients\":[{\"name\":\"猪肉\",\"quantity\":\"200g\",\"isRequired\":true},{\"name\":\"青椒\",\"quantity\":\"2个\",\"isRequired\":true},{\"name\":\"蒜\",\"quantity\":\"3瓣\",\"isRequired\":false},{\"name\":\"酱油\",\"quantity\":\"1勺\",\"isRequired\":false},{\"name\":\"料酒\",\"quantity\":\"1勺\",\"isRequired\":false},{\"name\":\"淀粉\",\"quantity\":\"1勺\",\"isRequired\":false}],\"steps\":[{\"stepNumber\":1,\"description\":\"猪肉切丝，加入酱油、料酒、淀粉抓匀腌制10分钟\",\"duration\":10},{\"stepNumber\":2,\"description\":\"青椒去籽切丝，蒜切片备用\",\"duration\":3},{\"stepNumber\":3,\"description\":\"锅中热油，放入腌好的肉丝快速滑炒至变色，盛出备用\",\"duration\":2},{\"stepNumber\":4,\"description\":\"锅中留底油，放入蒜片爆香，加入青椒丝大火翻炒至断生\",\"duration\":3},{\"stepNumber\":5,\"description\":\"倒入炒好的肉丝，加盐调味，快速翻炒均匀即可出锅\",\"duration\":2}]}"
+        };
     }
 
     /**
