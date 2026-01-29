@@ -16,13 +16,9 @@ public class History {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private String userId;
+    private Long userId;
 
     private Long recipeId;
-
-    private String inputIngredients;
-
-    private String filterConditions;
 
     @TableField(exist = false)
     private Recipe recipe;

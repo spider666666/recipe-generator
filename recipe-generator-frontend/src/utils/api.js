@@ -62,4 +62,70 @@ export const getRecipeDetail = async (id) => {
   return await api.get(`/recipes/${id}`)
 }
 
+// 食材相关 API
+export const searchIngredientByNameAPI = async (name) => {
+  return await api.get('/ingredients/search', { params: { name } })
+}
+
+export const getAllIngredientsAPI = async () => {
+  return await api.get('/ingredients')
+}
+
+// 收藏相关 API
+export const addFavoriteAPI = async (recipeId) => {
+  return await api.post(`/favorites/${recipeId}`)
+}
+
+export const removeFavoriteAPI = async (recipeId) => {
+  return await api.delete(`/favorites/${recipeId}`)
+}
+
+export const getFavoritesAPI = async () => {
+  return await api.get('/favorites')
+}
+
+export const checkFavoriteAPI = async (recipeId) => {
+  return await api.get(`/favorites/check/${recipeId}`)
+}
+
+// 历史记录相关 API
+export const addHistoryAPI = async (recipeId) => {
+  return await api.post(`/history/${recipeId}`)
+}
+
+export const getHistoryAPI = async () => {
+  return await api.get('/history')
+}
+
+export const deleteHistoryAPI = async (historyId) => {
+  return await api.delete(`/history/${historyId}`)
+}
+
+export const clearHistoryAPI = async () => {
+  return await api.delete('/history')
+}
+
+// 购物清单相关 API
+export const addShoppingItemAPI = async (data) => {
+  return await api.post('/shopping-list', data)
+}
+
+export const getShoppingListAPI = async () => {
+  return await api.get('/shopping-list')
+}
+
+export const updatePurchaseStatusAPI = async (itemId, isPurchased) => {
+  return await api.put(`/shopping-list/${itemId}/purchase`, null, {
+    params: { isPurchased }
+  })
+}
+
+export const deleteShoppingItemAPI = async (itemId) => {
+  return await api.delete(`/shopping-list/${itemId}`)
+}
+
+export const clearShoppingListAPI = async () => {
+  return await api.delete('/shopping-list')
+}
+
 export default api

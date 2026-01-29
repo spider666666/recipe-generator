@@ -158,13 +158,16 @@
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Star, StarFilled, ShoppingCart, Download } from '@element-plus/icons-vue'
+import { addFavoriteAPI, removeFavoriteAPI, getFavoritesAPI, addShoppingItemAPI, searchIngredientByNameAPI } from '../utils/api'
 
 const recipes = ref([])
 const detailVisible = ref(false)
 const currentRecipe = ref(null)
+const favoriteIds = ref(new Set())
 
 onMounted(() => {
   loadRecipes()
+  loadFavorites()
   // 监听导航事件
   window.addEventListener('navigate', handleNavigate)
 })
@@ -173,6 +176,17 @@ const loadRecipes = () => {
   const stored = localStorage.getItem('current-recipes')
   if (stored) {
     recipes.value = JSON.parse(stored)
+  }
+}
+
+const loadFavorites = async () => {
+  try {
+    const response = await getFavoritesAPI()
+    if (response.data) {
+      favoriteIds.value = new Set(response.data.map(fav => fav.recipeId))
+    }
+  } catch (error) {
+    console.error('加载收藏失败:', error)
   }
 }
 
@@ -188,26 +202,23 @@ const goToHome = () => {
 
 // 收藏相关
 const isFavorite = (id) => {
-  const favorites = JSON.parse(localStorage.getItem('favorites') || '[]')
-  return favorites.some(fav => fav.id === id)
+  return favoriteIds.value.has(id)
 }
 
-const toggleFavorite = (recipe) => {
-  const favorites = JSON.parse(localStorage.getItem('favorites') || '[]')
-  const index = favorites.findIndex(fav => fav.id === recipe.id)
-
-  if (index > -1) {
-    favorites.splice(index, 1)
-    ElMessage.success('已取消收藏')
-  } else {
-    favorites.push({
-      ...recipe,
-      favoritedAt: new Date().toISOString()
-    })
-    ElMessage.success('已添加到收藏夹')
+const toggleFavorite = async (recipe) => {
+  try {
+    if (isFavorite(recipe.id)) {
+      await removeFavoriteAPI(recipe.id)
+      favoriteIds.value.delete(recipe.id)
+      ElMessage.success('已取消收藏')
+    } else {
+      await addFavoriteAPI(recipe.id)
+      favoriteIds.value.add(recipe.id)
+      ElMessage.success('已添加到收藏夹')
+    }
+  } catch (error) {
+    ElMessage.error(error.message || '操作失败')
   }
-
-  localStorage.setItem('favorites', JSON.stringify(favorites))
 }
 
 // 查看详情
@@ -248,21 +259,15 @@ const saveComment = () => {
 }
 
 // 加入购物清单
-const addToShopping = (recipe) => {
-  const shoppingList = JSON.parse(localStorage.getItem('shopping-list') || '[]')
-
-  // 获取用户选择的食材（从历史记录中获取）
-  const history = JSON.parse(localStorage.getItem('recipe-history') || '[]')
-  const userIngredients = history.length > 0 ? history[0].ingredients.map(ing => ing.name) : []
-
-  // 判断缺少的食材：如果 available 字段存在则使用它，否则根据用户选择的食材判断
+const addToShopping = async (recipe) => {
+  // 判断缺少的食材：使用 available 字段
   const missingIngredients = recipe.ingredients.filter(ing => {
     // 如果 available 字段存在，使用它
     if (typeof ing.available === 'boolean') {
       return !ing.available
     }
-    // 否则，检查是否在用户选择的食材中
-    return !userIngredients.includes(ing.name)
+    // 默认认为缺少
+    return true
   })
 
   if (missingIngredients.length === 0) {
@@ -270,22 +275,24 @@ const addToShopping = (recipe) => {
     return
   }
 
-  missingIngredients.forEach(ing => {
-    const exists = shoppingList.find(item => item.name === ing.name)
-    if (!exists) {
-      shoppingList.push({
-        id: Date.now() + Math.random(),
-        name: ing.name,
-        amount: ing.amount,
-        category: ing.category || '其他',
-        checked: false,
-        note: ''
-      })
+  try {
+    let addedCount = 0
+    for (const ing of missingIngredients) {
+      // 查找食材ID
+      const ingredientResponse = await searchIngredientByNameAPI(ing.name)
+      if (ingredientResponse.data) {
+        await addShoppingItemAPI({
+          ingredientId: ingredientResponse.data.id,
+          quantity: ing.amount,
+          note: ''
+        })
+        addedCount++
+      }
     }
-  })
-
-  localStorage.setItem('shopping-list', JSON.stringify(shoppingList))
-  ElMessage.success(`已添加 ${missingIngredients.length} 种食材到购物清单`)
+    ElMessage.success(`已添加 ${addedCount} 种食材到购物清单`)
+  } catch (error) {
+    ElMessage.error(error.message || '添加失败')
+  }
 }
 
 // 导出菜谱

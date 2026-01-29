@@ -183,7 +183,7 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Collection, MagicStick } from '@element-plus/icons-vue'
 import IngredientGrid from '../components/IngredientGrid.vue'
-import { generateRecipesAPI } from '../utils/api'
+import { generateRecipesAPI, addHistoryAPI } from '../utils/api'
 import { ingredientsData } from '../utils/ingredientsData'
 
 const activeCategory = ref('vegetables')
@@ -397,18 +397,12 @@ const generateRecipes = async () => {
     // 将单个菜谱包装成数组
     const recipesArray = [formattedRecipe]
 
-    // 保存到历史记录
-    const history = JSON.parse(localStorage.getItem('recipe-history') || '[]')
-    history.unshift({
-      id: Date.now(),
-      ingredients: [...selectedIngredients.value],
-      filters: { ...filters.value },
-      recipes: recipesArray,
-      createdAt: new Date().toISOString()
-    })
-    // 只保留最近50条
-    if (history.length > 50) history.pop()
-    localStorage.setItem('recipe-history', JSON.stringify(history))
+    // 保存到后端历史记录
+    try {
+      await addHistoryAPI(recipe.id)
+    } catch (err) {
+      console.error('保存历史记录失败:', err)
+    }
 
     // 保存到全局状态（用于菜谱页面展示）
     localStorage.setItem('current-recipes', JSON.stringify(recipesArray))

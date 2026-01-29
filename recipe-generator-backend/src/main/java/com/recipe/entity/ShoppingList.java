@@ -16,17 +16,15 @@ public class ShoppingList {
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private String userId;
+    private Long userId;
 
-    private String ingredientName;
+    private Long ingredientId;
 
     private String quantity;
 
-    private String category;
+    private Boolean isPurchased;
 
     private String note;
-
-    private Boolean isPurchased;
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;

@@ -19,10 +19,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public UserInfoResponse getCurrentUserInfo(String username) {
-        User user = userMapper.selectOne(
-                new LambdaQueryWrapper<User>()
-                        .eq(User::getUsername, username)
-        );
+        User user = findByUsername(username);
 
         if (user == null) {
             throw new RuntimeException("用户不存在");
@@ -37,5 +34,13 @@ public class UserServiceImpl implements IUserService {
         response.setCreateTime(user.getCreateTime());
 
         return response;
+    }
+
+    @Override
+    public User findByUsername(String username) {
+        return userMapper.selectOne(
+                new LambdaQueryWrapper<User>()
+                        .eq(User::getUsername, username)
+        );
     }
 }

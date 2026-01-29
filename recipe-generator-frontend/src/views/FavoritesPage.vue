@@ -200,6 +200,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete } from '@element-plus/icons-vue'
+import { getFavoritesAPI, removeFavoriteAPI, getHistoryAPI, deleteHistoryAPI } from '../utils/api'
 
 const activeTab = ref('favorites')
 const favorites = ref([])
@@ -211,9 +212,32 @@ onMounted(() => {
   loadData()
 })
 
-const loadData = () => {
-  favorites.value = JSON.parse(localStorage.getItem('favorites') || '[]')
-  history.value = JSON.parse(localStorage.getItem('recipe-history') || '[]')
+const loadData = async () => {
+  try {
+    // 加载收藏
+    const favResponse = await getFavoritesAPI()
+    if (favResponse.data) {
+      favorites.value = favResponse.data.map(fav => ({
+        id: fav.recipeId,
+        ...fav.recipe,
+        favoritedAt: fav.createTime
+      }))
+    }
+
+    // 加载历史记录
+    const historyResponse = await getHistoryAPI()
+    if (historyResponse.data) {
+      history.value = historyResponse.data.map(h => ({
+        id: h.id,
+        recipes: [h.recipe],
+        createdAt: h.createTime,
+        ingredients: [],
+        filters: {}
+      }))
+    }
+  } catch (error) {
+    console.error('加载数据失败:', error)
+  }
 }
 
 const removeFavorite = async (id) => {
@@ -224,11 +248,13 @@ const removeFavorite = async (id) => {
       type: 'warning'
     })
 
+    await removeFavoriteAPI(id)
     favorites.value = favorites.value.filter(fav => fav.id !== id)
-    localStorage.setItem('favorites', JSON.stringify(favorites.value))
     ElMessage.success('已取消收藏')
-  } catch {
-    // 用户取消
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || '操作失败')
+    }
   }
 }
 
@@ -240,11 +266,13 @@ const removeHistory = async (id) => {
       type: 'warning'
     })
 
+    await deleteHistoryAPI(id)
     history.value = history.value.filter(h => h.id !== id)
-    localStorage.setItem('recipe-history', JSON.stringify(history.value))
     ElMessage.success('已删除记录')
-  } catch {
-    // 用户取消
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.message || '操作失败')
+    }
   }
 }
 
