@@ -1,0 +1,72 @@
+﻿# ==============================================
+# 通用规则：忽略Windows系统特殊文件（解决nul报错核心）
+# ==============================================
+nul
+nul.*
+CON
+CON.*
+PRN
+PRN.*
+COM*
+LPT*
+Thumbs.db
+Desktop.ini
+*.tmp
+*.bak
+*.swp
+*~
+
+# ==============================================
+# 后端规则：适配Spring Boot（Maven）
+# ==============================================
+# 编译输出目录
+**/target/
+**/classes/
+# Maven构建缓存
+**/.mvn/
+**/mvnw
+**/mvnw.cmd
+# 日志文件
+**/*.log
+**/logs/
+# 本地敏感配置（开发环境配置，含密钥、端口等）
+**/application-dev.yml
+**/application-local.yml
+**/application-test.yml
+# IDE后端配置
+**/.idea/
+**/*.iml
+**/.classpath
+**/.project
+**/.settings/
+
+# ==============================================
+# 前端规则：适配Vue/React/Angular（通用前端）
+# ==============================================
+# 前端依赖包（核心，体积大，无需提交）
+**/node_modules/
+# 前端编译/打包输出
+**/dist/
+**/build/
+**/out/
+# 前端环境变量（含接口地址、密钥等）
+**/.env
+**/.env.*
+**/!.env.example
+# 前端包管理缓存
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+# 前端日志/临时文件
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+# IDE前端配置
+**/.vscode/
+**/.eslintcache
+**/coverage/
+
+# ==============================================
+# Git本身忽略
+# ==============================================
+.git/
