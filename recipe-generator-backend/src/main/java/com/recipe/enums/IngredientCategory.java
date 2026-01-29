@@ -5,7 +5,8 @@ public enum IngredientCategory {
     MEAT("肉类"),
     SEAFOOD("海鲜类"),
     STAPLE("主食类"),
-    SEASONING("调味料");
+    SEASONING("调味料"),
+    OTHER("其他");
 
     private final String displayName;
 

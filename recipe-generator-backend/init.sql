@@ -69,6 +69,97 @@ INSERT INTO ingredient (name, category, common_unit, calories) VALUES
 ('姜', 'SEASONING', 'g', 41),
 ('蒜', 'SEASONING', '瓣', 128);
 
+-- 3. 创建食谱表：存储生成的食谱基本信息
+DROP TABLE IF EXISTS recipe;
+CREATE TABLE recipe (
+                        id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '食谱唯一ID',
+                        name VARCHAR(100) NOT NULL COMMENT '菜品名称',
+                        cuisine_type VARCHAR(20) NOT NULL COMMENT '菜系类型（CHINESE/WESTERN/JAPANESE_KOREAN/SOUTHEAST_ASIAN）',
+                        flavor_types VARCHAR(100) COMMENT '口味类型（多个用逗号分隔：SPICY,SWEET,SALTY,SOUR,MILD）',
+                        cooking_time INT NOT NULL COMMENT '烹饪时间（分钟）',
+                        difficulty_level VARCHAR(20) NOT NULL COMMENT '难度等级（BEGINNER/HOME_COOKING/CHEF）',
+                        description TEXT COMMENT '菜品描述',
+                        image_url VARCHAR(255) COMMENT '菜品图片URL',
+                        servings INT DEFAULT 2 COMMENT '份数',
+                        create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                        update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='食谱基本信息表';
+
+-- 4. 创建食谱-食材关联表：存储食谱所需的食材及用量
+DROP TABLE IF EXISTS recipe_ingredient;
+CREATE TABLE recipe_ingredient (
+                                   id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '关联唯一ID',
+                                   recipe_id BIGINT NOT NULL COMMENT '食谱ID',
+                                   ingredient_id BIGINT NOT NULL COMMENT '食材ID',
+                                   quantity VARCHAR(20) NOT NULL COMMENT '用量（如2个、100g）',
+                                   is_required TINYINT(1) DEFAULT 1 COMMENT '是否必需（1-必需，0-可选）',
+                                   create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                                   KEY idx_recipe_id (recipe_id) COMMENT '食谱ID索引',
+                                   KEY idx_ingredient_id (ingredient_id) COMMENT '食材ID索引',
+                                   FOREIGN KEY (recipe_id) REFERENCES recipe(id) ON DELETE CASCADE,
+                                   FOREIGN KEY (ingredient_id) REFERENCES ingredient(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='食谱-食材关联表';
+
+-- 5. 创建食谱步骤表：存储烹饪步骤详情
+DROP TABLE IF EXISTS recipe_step;
+CREATE TABLE recipe_step (
+                             id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '步骤唯一ID',
+                             recipe_id BIGINT NOT NULL COMMENT '食谱ID',
+                             step_number INT NOT NULL COMMENT '步骤序号',
+                             description TEXT NOT NULL COMMENT '步骤描述',
+                             image_url VARCHAR(255) COMMENT '步骤图片URL',
+                             duration INT COMMENT '步骤耗时（分钟）',
+                             create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                             update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                             KEY idx_recipe_id (recipe_id) COMMENT '食谱ID索引',
+                             FOREIGN KEY (recipe_id) REFERENCES recipe(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='食谱步骤表';
+
+-- 6. 创建收藏表：存储用户收藏的食谱
+DROP TABLE IF EXISTS favorite;
+CREATE TABLE favorite (
+                          id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '收藏唯一ID',
+                          user_id BIGINT NOT NULL COMMENT '用户ID',
+                          recipe_id BIGINT NOT NULL COMMENT '食谱ID',
+                          create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '收藏时间',
+                          KEY idx_user_id (user_id) COMMENT '用户ID索引',
+                          KEY idx_recipe_id (recipe_id) COMMENT '食谱ID索引',
+                          UNIQUE KEY uk_user_recipe (user_id, recipe_id) COMMENT '用户-食谱唯一',
+                          FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                          FOREIGN KEY (recipe_id) REFERENCES recipe(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户收藏表';
+
+-- 7. 创建历史记录表：存储用户生成食谱的历史
+DROP TABLE IF EXISTS history;
+CREATE TABLE history (
+                         id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '历史记录唯一ID',
+                         user_id BIGINT NOT NULL COMMENT '用户ID',
+                         recipe_id BIGINT NOT NULL COMMENT '食谱ID',
+                         create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '生成时间',
+                         KEY idx_user_id (user_id) COMMENT '用户ID索引',
+                         KEY idx_recipe_id (recipe_id) COMMENT '食谱ID索引',
+                         FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                         FOREIGN KEY (recipe_id) REFERENCES recipe(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='生成历史记录表';
+
+-- 8. 创建购物清单表：存储用户的购物清单
+DROP TABLE IF EXISTS shopping_list;
+CREATE TABLE shopping_list (
+                               id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '���单项唯一ID',
+                               user_id BIGINT NOT NULL COMMENT '用户ID',
+                               ingredient_id BIGINT NOT NULL COMMENT '食材ID',
+                               quantity VARCHAR(20) NOT NULL COMMENT '购买数量',
+                               is_purchased TINYINT(1) DEFAULT 0 COMMENT '是否已购买（1-已购买，0-未购买）',
+                               note VARCHAR(200) COMMENT '备注',
+                               create_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间',
+                               update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                               KEY idx_user_id (user_id) COMMENT '用户ID索引',
+                               KEY idx_ingredient_id (ingredient_id) COMMENT '食材ID索引',
+                               FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE,
+                               FOREIGN KEY (ingredient_id) REFERENCES ingredient(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='购物清单表';
+
 -- 插入测试用户（密码均为123456，BCrypt加密）
 INSERT INTO user (username, password, email, nickname, enabled) VALUES
                                                                     ('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBOsl7iAt6Z5EH', 'admin@recipe.com', '管理员', true),

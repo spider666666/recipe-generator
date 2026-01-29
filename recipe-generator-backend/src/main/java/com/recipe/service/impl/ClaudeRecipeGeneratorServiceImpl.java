@@ -46,12 +46,12 @@ public class ClaudeRecipeGeneratorServiceImpl implements IClaudeRecipeGeneratorS
     @Transactional
     public Recipe generateRecipeWithClaude(GenerateRecipeRequest request) {
         try {
-//            String prompt = buildPrompt(request);
-//            String claudeResponse = callClaudeAPI(prompt);
-//            return parseClaudeResponse(claudeResponse, request);
-            Recipe recipe = new Recipe();
-            recipe.setName("西红柿炒鸡蛋");
-            return recipe;
+            //根据请求构建，无所谓
+            String prompt = buildPrompt(request);
+            //todo 硬编码实现
+            String claudeResponse = callClaudeAPI(prompt);
+            //todo 硬编码实现
+            return parseClaudeResponse(claudeResponse, request);
         } catch (Exception e) {
             log.error("调用Claude API失败", e);
             throw new RuntimeException("生成食谱失败: " + e.getMessage());
@@ -130,53 +130,111 @@ public class ClaudeRecipeGeneratorServiceImpl implements IClaudeRecipeGeneratorS
         log.debug("请求体: {}", jsonBody);
 
         // 修改请求头配置 - 移除可能导致问题的头
-        Request request = new Request.Builder()
-                .url(claudeConfig.getApiUrl())
-                .addHeader("Authorization", "Bearer " + claudeConfig.getApiKey())  // 标准认证方式
-                .addHeader("Content-Type", "application/json")  // 标准Content-Type（大写）
-                .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
-                .build();
+        //todo 这里可能存在问题
+//        Request request = new Request.Builder()
+//                .url(claudeConfig.getApiUrl())
+//                .addHeader("Authorization", "Bearer " + claudeConfig.getApiKey())  // 标准认证方式
+//                .addHeader("Content-Type", "application/json")  // 标准Content-Type（大写）
+//                .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
+//                .build();
+//
+//        log.info("请求头: Authorization=Bearer {}, Content-Type=application/json",
+//                claudeConfig.getApiKey().substring(0, Math.min(10, claudeConfig.getApiKey().length())) + "...");
+//
+//        try (Response response = httpClient.newCall(request).execute()) {
+//            String responseBody = response.body() != null ? response.body().string() : "";
+//
+//            log.info("Claude API响应状态: {}", response.code());
+//            log.info("响应消息: {}", response.message());
+//            log.debug("响应体: {}", responseBody);
+//
+//            if (!response.isSuccessful()) {
+//                log.error("Claude API调用失败 - 状态码: {}, 消息: {}, 响应体: {}",
+//                        response.code(), response.message(), responseBody);
+//                throw new IOException("Claude API调用失败: " + response.code() + " " + response.message() + " - " + responseBody);
+//            }
 
-        log.info("请求头: Authorization=Bearer {}, Content-Type=application/json",
-                claudeConfig.getApiKey().substring(0, Math.min(10, claudeConfig.getApiKey().length())) + "...");
-
-        try (Response response = httpClient.newCall(request).execute()) {
-            String responseBody = response.body() != null ? response.body().string() : "";
-
-            log.info("Claude API响应状态: {}", response.code());
-            log.info("响应消息: {}", response.message());
-            log.debug("响应体: {}", responseBody);
-
-            if (!response.isSuccessful()) {
-                log.error("Claude API调用失败 - 状态码: {}, 消息: {}, 响应体: {}",
-                        response.code(), response.message(), responseBody);
-                throw new IOException("Claude API调用失败: " + response.code() + " " + response.message() + " - " + responseBody);
-            }
-
-            JsonNode jsonNode = objectMapper.readTree(responseBody);
+//            JsonNode jsonNode = objectMapper.readTree(responseBody);
 
             // 提取Claude的回复内容
-            JsonNode contentArray = jsonNode.get("content");
-            if (contentArray != null && contentArray.isArray() && contentArray.size() > 0) {
-                JsonNode textNode = contentArray.get(0).get("text");
-                if (textNode != null) {
-                    String result = textNode.asText();
-                    log.info("成功获取Claude响应，长度: {}", result.length());
-                    return result;
-                }
-            }
+//            JsonNode contentArray = jsonNode.get("content");
 
-            // 尝试其他可能的响应格式
-            if (jsonNode.has("response")) {
-                return jsonNode.get("response").asText();
-            }
-            if (jsonNode.has("text")) {
-                return jsonNode.get("text").asText();
-            }
+//            if (contentArray != null && contentArray.isArray() && contentArray.size() > 0) {
+//                JsonNode textNode = contentArray.get(0).get("text");
+//                if (textNode != null) {
+//                    String result = textNode.asText();
+//                    log.info("成功获取Claude响应，长度: {}", result.length());
+//                    return result;
+//                }
+//            }
+        String result = "{\n" +
+                "  \"name\": \"西红柿炒鸡蛋\",\n" +
+                "  \"description\": \"经典中式家常菜，口感嫩滑、口味清淡，食材简单易获取，10分钟即可完成，适合烹饪新手\",\n" +
+                "  \"servings\": 2,\n" +
+                "  \"ingredients\": [\n" +
+                "    {\n" +
+                "      \"name\": \"西红柿\",\n" +
+                "      \"quantity\": \"2个\",\n" +
+                "      \"isRequired\": true\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"鸡蛋\",\n" +
+                "      \"quantity\": \"3个\",\n" +
+                "      \"isRequired\": true\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"食用盐\",\n" +
+                "      \"quantity\": \"少许\",\n" +
+                "      \"isRequired\": false\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"食用油\",\n" +
+                "      \"quantity\": \"2勺\",\n" +
+                "      \"isRequired\": false\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"steps\": [\n" +
+                "    {\n" +
+                "      \"stepNumber\": 1,\n" +
+                "      \"description\": \"西红柿洗净，顶部划十字刀，用开水烫10秒剥去外皮，切成小块备用\",\n" +
+                "      \"duration\": 3\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"stepNumber\": 2,\n" +
+                "      \"description\": \"鸡蛋打入碗中，加少许盐搅打至出现细腻泡沫，静置2分钟\",\n" +
+                "      \"duration\": 2\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"stepNumber\": 3,\n" +
+                "      \"description\": \"锅中倒入食用油，油温烧至六成热（微微冒烟），倒入蛋液快速翻炒至定型，盛出备用\",\n" +
+                "      \"duration\": 2\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"stepNumber\": 4,\n" +
+                "      \"description\": \"同一口锅留少许底油，放入西红柿块翻炒，压出西红柿汤汁，炒至软烂\",\n" +
+                "      \"duration\": 3\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"stepNumber\": 5,\n" +
+                "      \"description\": \"倒入炒好的鸡蛋，与西红柿翻炒均匀，加少许盐调味，翻炒10秒即可出锅\",\n" +
+                "      \"duration\": 2\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}";
 
-            log.error("Claude API返回格式错误: {}", responseBody);
-            throw new IOException("Claude API返回格式错误: " + responseBody);
-        }
+//            // todo尝试其他可能的响应格式
+//            if (jsonNode.has("response")) {
+//                return jsonNode.get("response").asText();
+//            }
+//            if (jsonNode.has("text")) {
+//                return jsonNode.get("text").asText();
+//            }
+//
+//            log.error("Claude API返回格式错误: {}", responseBody);
+//            throw new IOException("Claude API返回格式错误: " + responseBody);
+
+        return result;
+
     }
 
     /**
@@ -211,8 +269,27 @@ public class ClaudeRecipeGeneratorServiceImpl implements IClaudeRecipeGeneratorS
             JsonNode ingredientsNode = recipeJson.get("ingredients");
             if (ingredientsNode != null && ingredientsNode.isArray()) {
                 for (JsonNode ingNode : ingredientsNode) {
+                    String ingredientName = ingNode.get("name").asText();
+
+                    // 查找或创建食材
+                    com.recipe.entity.Ingredient ingredient = ingredientMapper.selectOne(
+                        new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<com.recipe.entity.Ingredient>()
+                            .eq(com.recipe.entity.Ingredient::getName, ingredientName)
+                    );
+
+                    if (ingredient == null) {
+                        // 创建新食材，设置默认值
+                        ingredient = new com.recipe.entity.Ingredient();
+                        ingredient.setName(ingredientName);
+                        ingredient.setCategory(com.recipe.enums.IngredientCategory.OTHER);  // 默认分类
+                        ingredient.setCommonUnit("适量");  // 默认单位
+                        ingredient.setCalories(0);  // 默认热量
+                        ingredientMapper.insert(ingredient);
+                    }
+
                     RecipeIngredient ri = new RecipeIngredient();
                     ri.setRecipeId(recipe.getId());
+                    ri.setIngredientId(ingredient.getId());  // 设置食材ID
                     ri.setQuantity(ingNode.get("quantity").asText());
                     ri.setIsRequired(ingNode.has("isRequired") ? ingNode.get("isRequired").asBoolean() : true);
                     recipeIngredientMapper.insert(ri);
