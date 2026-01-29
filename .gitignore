@@ -7,7 +7,6 @@ CON
 CON.*
 PRN
 PRN.*
-COM*
 LPT*
 Thumbs.db
 Desktop.ini
