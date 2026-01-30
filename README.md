@@ -138,7 +138,7 @@ AI智能菜谱生成器是一个基于Claude AI的智能烹饪助手，采用可
 1. **克隆项目**
 
 ```bash
-git clone https://github.com/yourusername/recipe-generator.git
+git clone https://github.com/spider666666/recipe-generator.git
 cd recipe-generator
 ```
 
@@ -412,44 +412,10 @@ GET /api/ingredients/search?name=土豆
 Authorization: Bearer {token}
 ```
 
-### 购物清单接口
-
-#### 添加购物清单项
-
 ```http
-POST /api/shopping-list
-Authorization: Bearer {token}
-Content-Type: application/json
 
-{
-  "ingredientId": 1,
-  "quantity": "2个",
-  "note": "买新鲜的"
-}
+
 ```
-
-#### 获取购物清单
-
-```http
-GET /api/shopping-list
-Authorization: Bearer {token}
-```
-
-#### 更新购买状态
-
-```http
-PUT /api/shopping-list/{itemId}/purchase?isPurchased=true
-Authorization: Bearer {token}
-```
-
-#### 清空购物清单
-
-```http
-DELETE /api/shopping-list/clear
-Authorization: Bearer {token}
-```
-
-### 收藏接口
 
 #### 添加收藏
 
@@ -556,14 +522,6 @@ Authorization: Bearer {token}
 - 显示收藏时间
 - 取消收藏按钮
 - 查看详情功能
-
-### 购物清单 🛒
-
-- 统计信息：总计、已购买、待购买
-- 按食材分类展示
-- 购买状态勾选
-- 备注编辑
-- 导出和清空功能
 
 ### 猫咪元素 🐱
 
@@ -784,8 +742,7 @@ cors:
 如有问题或建议，请通过以下方式联系：
 
 - 提交 [Issue](https://github.com/yourusername/recipe-generator/issues)
-- 发送邮件至：your.email@example.com
-- 加入讨论群：[Discord/QQ群]
+- 发送邮件至：3572677098@qq.com
 
 ---
 
