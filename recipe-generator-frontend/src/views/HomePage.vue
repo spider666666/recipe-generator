@@ -1,28 +1,14 @@
 <template>
   <div class="home-page">
-    <el-container>
-      <el-main>
-        <h1 class="page-title">选择你的食材</h1>
+    <div class="title-container">
+      <img src="@/assets/images/厨师猫.png" alt="厨师猫" class="title-cat-left" />
+      <h1 class="page-title">🍳 智能食谱生成器</h1>
+      <img src="@/assets/images/厨师猫.png" alt="厨师猫" class="title-cat-right" />
+    </div>
 
-        <!-- 食材分类标签页 -->
-        <el-tabs v-model="activeCategory" class="ingredient-tabs">
-          <el-tab-pane label="🥬 蔬菜类" name="vegetables">
-            <IngredientGrid :ingredients="ingredientsByCategory.vegetables" @select="handleSelectIngredient" />
-          </el-tab-pane>
-          <el-tab-pane label="🥩 肉类" name="meat">
-            <IngredientGrid :ingredients="ingredientsByCategory.meat" @select="handleSelectIngredient" />
-          </el-tab-pane>
-          <el-tab-pane label="🦐 海鲜类" name="seafood">
-            <IngredientGrid :ingredients="ingredientsByCategory.seafood" @select="handleSelectIngredient" />
-          </el-tab-pane>
-          <el-tab-pane label="🍚 主食类" name="staple">
-            <IngredientGrid :ingredients="ingredientsByCategory.staple" @select="handleSelectIngredient" />
-          </el-tab-pane>
-          <el-tab-pane label="🧂 调味料" name="seasoning">
-            <IngredientGrid :ingredients="ingredientsByCategory.seasoning" @select="handleSelectIngredient" />
-          </el-tab-pane>
-        </el-tabs>
-
+    <div class="layout-container">
+      <!-- 左侧：食材选择区 -->
+      <div class="left-section">
         <!-- 搜索框 -->
         <el-input
           v-model="searchQuery"
@@ -43,10 +29,32 @@
           <IngredientGrid :ingredients="filteredIngredients" @select="handleSelectIngredient" />
         </div>
 
+        <!-- 食材分类标签页 -->
+        <el-tabs v-model="activeCategory" class="ingredient-tabs">
+          <el-tab-pane label="🥬 蔬菜类" name="vegetables">
+            <IngredientGrid :ingredients="ingredientsByCategory.vegetables" @select="handleSelectIngredient" />
+          </el-tab-pane>
+          <el-tab-pane label="🥩 肉类" name="meat">
+            <IngredientGrid :ingredients="ingredientsByCategory.meat" @select="handleSelectIngredient" />
+          </el-tab-pane>
+          <el-tab-pane label="🦐 海鲜类" name="seafood">
+            <IngredientGrid :ingredients="ingredientsByCategory.seafood" @select="handleSelectIngredient" />
+          </el-tab-pane>
+          <el-tab-pane label="🍚 主食类" name="staple">
+            <IngredientGrid :ingredients="ingredientsByCategory.staple" @select="handleSelectIngredient" />
+          </el-tab-pane>
+          <el-tab-pane label="🧂 调味料" name="seasoning">
+            <IngredientGrid :ingredients="ingredientsByCategory.seasoning" @select="handleSelectIngredient" />
+          </el-tab-pane>
+        </el-tabs>
+
         <!-- 自由输入 -->
         <el-card class="custom-input-card">
           <template #header>
-            <span>添加自定义食材</span>
+            <div class="card-header-with-cat">
+              <span>✨ 添加自定义食材</span>
+              <img src="@/assets/images/猫爪.png" alt="猫爪" class="card-cat-icon" />
+            </div>
           </template>
           <el-row :gutter="12">
             <el-col :span="12">
@@ -69,119 +77,144 @@
               <span class="combo-count">{{ savedCombos.length }} 个</span>
             </div>
           </template>
-          <div class="combos-list">
-            <el-tag
+          <div class="combos-grid">
+            <div
               v-for="combo in savedCombos"
               :key="combo.createdAt"
-              class="combo-tag"
-              size="large"
-              type="success"
-              effect="plain"
-              closable
-              @click="loadCombo(combo)"
-              @close="deleteCombo(combo)"
+              class="combo-item"
             >
-              <el-icon><Collection /></el-icon>
-              {{ combo.name }} ({{ combo.ingredients.length }}种)
-            </el-tag>
-          </div>
-        </el-card>
-
-        <!-- 已选食材 -->
-        <el-card class="selected-card">
-          <template #header>
-            <div class="card-header">
-              <span>已选食材</span>
-              <el-button type="primary" link @click="saveCombo">
-                <el-icon><Collection /></el-icon>
-                保存常用组合
-              </el-button>
+              <div class="combo-item-header">
+                <el-icon class="combo-icon"><Collection /></el-icon>
+                <span class="combo-name">{{ combo.name }}</span>
+              </div>
+              <div class="combo-item-body">
+                <span class="combo-count-badge">{{ combo.ingredients.length }} 种食材</span>
+              </div>
+              <div class="combo-item-actions">
+                <el-button type="primary" size="small" @click="loadCombo(combo)" class="combo-use-btn">
+                  <el-icon><Check /></el-icon>
+                  使用
+                </el-button>
+                <el-button type="danger" size="small" plain @click="deleteCombo(combo)" class="combo-delete-btn">
+                  <el-icon><Delete /></el-icon>
+                  删除
+                </el-button>
+              </div>
             </div>
-          </template>
-          <div v-if="selectedIngredients.length === 0" class="empty-hint">
-            还没有选择食材
           </div>
-          <el-space v-else wrap>
-            <el-tag
-              v-for="(item, index) in selectedIngredients"
-              :key="index"
-              closable
-              @close="removeIngredient(index)"
-              size="large"
-            >
-              {{ item.name }} {{ item.amount }}
-            </el-tag>
-          </el-space>
         </el-card>
+      </div>
 
-        <!-- 筛选器 -->
-        <el-card class="filters-card">
-          <template #header>
-            <span>筛选条件</span>
-          </template>
+      <!-- 右侧：已选食材和筛选器 -->
+      <div class="right-section">
+        <div class="sticky-container">
+          <!-- 已选食材 -->
+          <el-card class="selected-card">
+            <template #header>
+              <div class="card-header">
+                <span>🛒 已选食材</span>
+                <el-button type="primary" link @click="saveCombo" size="small">
+                  <el-icon><Collection /></el-icon>
+                  保存
+                </el-button>
+              </div>
+            </template>
+            <div v-if="selectedIngredients.length === 0" class="empty-hint">
+              <img src="@/assets/images/困惑猫.png" alt="困惑猫" class="empty-cat-icon" />
+              <div>还没有选择食材喵~</div>
+            </div>
+            <el-space v-else wrap class="ingredients-list">
+              <el-tag
+                v-for="(item, index) in selectedIngredients"
+                :key="index"
+                closable
+                @close="removeIngredient(index)"
+                size="large"
+                type="success"
+              >
+                {{ item.name }} {{ item.amount }}
+              </el-tag>
+            </el-space>
+          </el-card>
 
-          <el-form label-width="80px">
-            <el-form-item label="菜系">
-              <el-select v-model="filters.cuisine" placeholder="请选择" style="width: 100%">
-                <el-option label="不限" value="" />
-                <el-option label="中餐" value="chinese" />
-                <el-option label="西餐" value="western" />
-                <el-option label="日韩料理" value="japanese" />
-                <el-option label="东南亚菜" value="southeast" />
-              </el-select>
-            </el-form-item>
+          <!-- 筛选器 -->
+          <el-card class="filters-card">
+            <template #header>
+              <div class="card-header-with-cat">
+                <span>⚙️ 筛选条件</span>
+                <img src="@/assets/images/猫爪.png" alt="猫爪" class="card-cat-icon" />
+              </div>
+            </template>
 
-            <el-form-item label="口味">
-              <el-checkbox-group v-model="filters.tastes">
-                <el-checkbox label="spicy">🌶️ 辣</el-checkbox>
-                <el-checkbox label="sweet">🍯 甜</el-checkbox>
-                <el-checkbox label="salty">🧂 咸</el-checkbox>
-                <el-checkbox label="sour">🍋 酸</el-checkbox>
-                <el-checkbox label="light">🌿 清淡</el-checkbox>
-              </el-checkbox-group>
-            </el-form-item>
+            <el-form label-position="top">
+              <el-form-item label="菜系">
+                <el-select v-model="filters.cuisine" placeholder="请选择" style="width: 100%">
+                  <el-option label="不限" value="" />
+                  <el-option label="中餐" value="chinese" />
+                  <el-option label="西餐" value="western" />
+                  <el-option label="日韩料理" value="japanese" />
+                  <el-option label="东南亚菜" value="southeast" />
+                </el-select>
+              </el-form-item>
 
-            <el-form-item label="烹饪时间">
-              <el-radio-group v-model="filters.time">
-                <el-radio label="15">15分钟</el-radio>
-                <el-radio label="30">30分钟</el-radio>
-                <el-radio label="60">1小时</el-radio>
-                <el-radio label="">不限</el-radio>
-              </el-radio-group>
-            </el-form-item>
+              <el-form-item label="口味">
+                <el-checkbox-group v-model="filters.tastes" class="taste-group">
+                  <el-checkbox label="spicy">🌶️ 辣</el-checkbox>
+                  <el-checkbox label="sweet">🍯 甜</el-checkbox>
+                  <el-checkbox label="salty">🧂 咸</el-checkbox>
+                  <el-checkbox label="sour">🍋 酸</el-checkbox>
+                  <el-checkbox label="light">🌿 清淡</el-checkbox>
+                </el-checkbox-group>
+              </el-form-item>
 
-            <el-form-item label="难度">
-              <el-radio-group v-model="filters.difficulty">
-                <el-radio label="easy">新手</el-radio>
-                <el-radio label="medium">家常</el-radio>
-                <el-radio label="hard">大厨</el-radio>
-                <el-radio label="">不限</el-radio>
-              </el-radio-group>
-            </el-form-item>
-          </el-form>
-        </el-card>
+              <el-form-item label="烹饪时间">
+                <el-radio-group v-model="filters.time" class="time-group">
+                  <el-radio label="15">15分钟</el-radio>
+                  <el-radio label="30">30分钟</el-radio>
+                  <el-radio label="60">1小时</el-radio>
+                  <el-radio label="">不限</el-radio>
+                </el-radio-group>
+              </el-form-item>
 
-        <!-- 生成按钮 -->
-        <el-button
-          type="primary"
-          size="large"
-          class="generate-btn"
-          @click="generateRecipes"
-          :loading="loading"
-          :disabled="selectedIngredients.length === 0"
-        >
-          <el-icon v-if="!loading"><MagicStick /></el-icon>
-          {{ loading ? '生成中...' : '生成食谱' }}
-        </el-button>
-      </el-main>
-    </el-container>
+              <el-form-item label="难度">
+                <el-radio-group v-model="filters.difficulty" class="difficulty-group">
+                  <el-radio label="easy">新手</el-radio>
+                  <el-radio label="medium">家常</el-radio>
+                  <el-radio label="hard">大厨</el-radio>
+                  <el-radio label="">不限</el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </el-form>
+          </el-card>
+
+          <!-- 生成按钮 -->
+          <el-button
+            type="primary"
+            size="large"
+            class="generate-btn"
+            @click="generateRecipes"
+            :loading="loading"
+            :disabled="selectedIngredients.length === 0"
+          >
+            <img v-if="!loading" src="@/assets/images/开心猫.png" alt="开心猫" class="btn-cat-icon" />
+            {{ loading ? '生成中...' : '生成食谱喵~' }}
+          </el-button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 背景装饰猫爪 -->
+    <div class="paw-decoration paw-1"></div>
+    <div class="paw-decoration paw-2"></div>
+    <div class="paw-decoration paw-3"></div>
+    <div class="paw-decoration paw-4"></div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Collection, MagicStick } from '@element-plus/icons-vue'
+import { Search, Collection, Close, Check, Delete } from '@element-plus/icons-vue'
 import IngredientGrid from '../components/IngredientGrid.vue'
 import { generateRecipesAPI, addHistoryAPI, getCombosAPI, saveCombosAPI, deleteComboAPI } from '../utils/api'
 import { ingredientsData } from '../utils/ingredientsData'
@@ -430,44 +463,240 @@ const generateRecipes = async () => {
 
 <style scoped>
 .home-page {
-  padding: 20px;
-  max-width: 1200px;
+  padding: 30px 20px;
+  max-width: 1600px;
   margin: 0 auto;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 50%, rgba(255, 179, 120, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 140, 158, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 40% 20%, rgba(255, 200, 124, 0.08) 0%, transparent 50%),
+    linear-gradient(135deg, #fff8f0 0%, #ffe8f0 50%, #fff5e8 100%);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 标题容器 */
+.title-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 40px;
+  animation: slideDown 0.6s ease-out;
+}
+
+.title-cat-left,
+.title-cat-right {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+.title-cat-right {
+  transform: scaleX(-1);
+  animation-delay: 0.3s;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .page-title {
-  font-size: 32px;
-  font-weight: bold;
+  font-size: 42px;
+  font-weight: 800;
   text-align: center;
-  margin-bottom: 30px;
-  color: #303133;
+  background: linear-gradient(135deg, #ff8c69 0%, #ff6b9d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -1px;
+  margin: 0;
 }
 
-.ingredient-tabs {
-  margin-bottom: 20px;
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
+/* 左右分栏布局 */
+.layout-container {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+/* 左侧食材选择区 */
+.left-section {
+  flex: 1;
+  min-width: 0;
+  animation: fadeInLeft 0.6s ease-out;
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 右侧固定区域 */
+.right-section {
+  width: 400px;
+  flex-shrink: 0;
+  animation: fadeInRight 0.6s ease-out;
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.sticky-container {
+  position: sticky;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 搜索框 */
 .search-input {
   margin-bottom: 20px;
 }
 
+.search-input :deep(.el-input__wrapper) {
+  border-radius: 30px;
+  box-shadow: 0 4px 20px rgba(255, 140, 158, 0.15);
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  background: white;
+}
+
+.search-input :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 6px 24px rgba(255, 140, 158, 0.25);
+  border-color: rgba(255, 140, 158, 0.3);
+}
+
+.search-input :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 6px 24px rgba(255, 140, 158, 0.35);
+  border-color: #ff8c9e;
+}
+
+/* 搜索结果 */
 .search-results {
   margin-bottom: 20px;
-  padding: 20px;
+  padding: 25px;
   background: white;
-  border-radius: 8px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 .search-results h3 {
   margin-bottom: 15px;
-  color: #606266;
+  color: #303133;
+  font-size: 18px;
+  font-weight: 600;
 }
 
+/* 食材标签页 */
+.ingredient-tabs {
+  margin-bottom: 20px;
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.ingredient-tabs:hover {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.ingredient-tabs :deep(.el-tabs__nav-wrap::after) {
+  display: none;
+}
+
+.ingredient-tabs :deep(.el-tabs__item) {
+  font-size: 15px;
+  font-weight: 600;
+  padding: 0 20px;
+  transition: all 0.3s ease;
+}
+
+.ingredient-tabs :deep(.el-tabs__item:hover) {
+  color: #ff8c69;
+}
+
+.ingredient-tabs :deep(.el-tabs__item.is-active) {
+  color: #ff8c69;
+}
+
+.ingredient-tabs :deep(.el-tabs__active-bar) {
+  background: linear-gradient(90deg, #ff8c69 0%, #ff6b9d 100%);
+  height: 3px;
+}
+
+/* 卡片通用样式 */
 .custom-input-card,
 .combos-card,
 .selected-card,
 .filters-card {
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: none;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.custom-input-card,
+.combos-card {
   margin-bottom: 20px;
+}
+
+.custom-input-card:hover,
+.combos-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.selected-card:hover,
+.filters-card:hover {
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+}
+
+.custom-input-card :deep(.el-card__header),
+.combos-card :deep(.el-card__header),
+.selected-card :deep(.el-card__header),
+.filters-card :deep(.el-card__header) {
+  background: linear-gradient(135deg, rgba(255, 179, 120, 0.12) 0%, rgba(255, 140, 158, 0.12) 100%);
+  border-bottom: 2px solid rgba(255, 140, 158, 0.2);
+  font-weight: 600;
+  font-size: 15px;
+  padding: 16px 20px;
 }
 
 .card-header {
@@ -476,42 +705,445 @@ const generateRecipes = async () => {
   align-items: center;
 }
 
-.combo-count {
-  font-size: 14px;
-  color: #909399;
+/* 卡片装饰猫爪 */
+.card-header-with-cat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
-.combos-list {
+.card-cat-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+.card-cat-icon:hover {
+  opacity: 1;
+  transform: rotate(15deg) scale(1.1);
+}
+
+/* 常用组合 - 卡片网格布局 */
+.combo-count {
+  font-size: 13px;
+  color: #909399;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.combos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.combo-item {
+  background: linear-gradient(135deg, #fff8f0 0%, #ffe8f0 100%);
+  border: 2px solid rgba(255, 140, 158, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 12px;
 }
 
-.combo-tag {
-  cursor: pointer;
-  transition: all 0.3s;
-  padding: 8px 16px;
+.combo-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ff8c69 0%, #ff6b9d 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
 }
 
-.combo-tag:hover {
+.combo-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(255, 140, 158, 0.3);
+  border-color: rgba(255, 140, 158, 0.4);
+}
+
+.combo-item:hover::before {
+  transform: scaleX(1);
+}
+
+.combo-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.combo-icon {
+  color: #ff8c69;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.combo-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 15px;
+  color: #303133;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.combo-item-body {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.combo-count-badge {
+  font-size: 12px;
+  color: #909399;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.combo-item-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.combo-use-btn,
+.combo-delete-btn {
+  flex: 1;
+  font-size: 13px;
+  height: 32px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.combo-use-btn {
+  background: linear-gradient(135deg, #ff8c69 0%, #ff6b9d 100%);
+  border: none;
+  color: white;
+}
+
+.combo-use-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 140, 158, 0.4);
+}
+
+.combo-delete-btn {
+  border-color: #f56c6c;
+  color: #f56c6c;
+}
+
+.combo-delete-btn:hover {
+  background: #f56c6c;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 108, 108, 0.4);
+}
+
+/* 已选食材 */
+.empty-hint {
+  color: #909399;
+  text-align: center;
+  padding: 40px 0;
+  font-size: 14px;
+}
+
+.empty-cat-icon {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 15px;
+  animation: wiggle 2s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+.ingredients-list {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 5px;
+}
+
+.ingredients-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ingredients-list::-webkit-scrollbar-thumb {
+  background: #dcdfe6;
+  border-radius: 3px;
+}
+
+.ingredients-list::-webkit-scrollbar-thumb:hover {
+  background: #c0c4cc;
+}
+
+.selected-card :deep(.el-tag) {
+  margin: 4px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: 2px solid currentColor;
+}
+
+.selected-card :deep(.el-tag:hover) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
 }
 
-.combo-tag .el-icon {
-  margin-right: 6px;
+/* 筛选器 */
+.filters-card :deep(.el-form) {
+  margin-top: -5px;
 }
 
-.empty-hint {
-  color: #909399;
-  text-align: center;
-  padding: 20px 0;
+.filters-card :deep(.el-form-item) {
+  margin-bottom: 22px;
 }
 
+.filters-card :deep(.el-form-item__label) {
+  font-weight: 600;
+  color: #303133;
+  font-size: 14px;
+  margin-bottom: 10px;
+  padding: 0;
+}
+
+.filters-card :deep(.el-select .el-input__wrapper) {
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.filters-card :deep(.el-select .el-input__wrapper:hover) {
+  border-color: #ff8c69;
+}
+
+.taste-group,
+.time-group,
+.difficulty-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filters-card :deep(.el-checkbox),
+.filters-card :deep(.el-radio) {
+  margin-right: 0;
+  margin-bottom: 0;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background: #f5f7fa;
+}
+
+.filters-card :deep(.el-checkbox:hover),
+.filters-card :deep(.el-radio:hover) {
+  background: #e8eef5;
+}
+
+.filters-card :deep(.el-checkbox.is-checked),
+.filters-card :deep(.el-radio.is-checked) {
+  background: rgba(255, 140, 158, 0.15);
+}
+
+/* 生成按钮 */
 .generate-btn {
   width: 100%;
   height: 60px;
-  font-size: 20px;
-  margin-top: 20px;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #ff8c69 0%, #ff6b9d 100%);
+  border: none;
+  box-shadow: 0 8px 24px rgba(255, 107, 107, 0.4);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-cat-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+  0%, 90% {
+    transform: rotate(0deg);
+  }
+  95% {
+    transform: rotate(15deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.generate-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.generate-btn:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.generate-btn:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(255, 107, 107, 0.5);
+}
+
+.generate-btn:active:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.generate-btn:disabled {
+  background: linear-gradient(135deg, #c0c4cc 0%, #a8abb2 100%);
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* 背景装饰猫爪 */
+.paw-decoration {
+  position: fixed;
+  width: 80px;
+  height: 80px;
+  background-image: url('@/assets/images/猫爪.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.paw-1 {
+  top: 15%;
+  left: 5%;
+  transform: rotate(-15deg);
+  animation: float 6s ease-in-out infinite;
+}
+
+.paw-2 {
+  top: 60%;
+  right: 8%;
+  transform: rotate(25deg);
+  animation: float 7s ease-in-out infinite 1s;
+}
+
+.paw-3 {
+  bottom: 20%;
+  left: 10%;
+  transform: rotate(45deg);
+  animation: float 8s ease-in-out infinite 2s;
+}
+
+.paw-4 {
+  top: 35%;
+  right: 15%;
+  transform: rotate(-30deg);
+  animation: float 9s ease-in-out infinite 3s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(var(--rotation, 0deg));
+  }
+  50% {
+    transform: translateY(-20px) rotate(var(--rotation, 0deg));
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .right-section {
+    width: 360px;
+  }
+}
+
+@media (max-width: 992px) {
+  .layout-container {
+    flex-direction: column;
+  }
+
+  .right-section {
+    width: 100%;
+  }
+
+  .sticky-container {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-page {
+    padding: 20px 15px;
+  }
+
+  .page-title {
+    font-size: 32px;
+    margin-bottom: 30px;
+  }
+
+  .layout-container {
+    gap: 20px;
+  }
+
+  .ingredient-tabs,
+  .search-results,
+  .custom-input-card,
+  .combos-card {
+    padding: 15px;
+  }
+
+  .combos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .generate-btn {
+    height: 55px;
+    font-size: 16px;
+  }
+
+  .filters-card :deep(.el-checkbox),
+  .filters-card :deep(.el-radio) {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
 }
 </style>
