@@ -46,7 +46,15 @@ public class ShoppingListServiceImpl implements IShoppingListService {
                .orderByAsc(ShoppingList::getIsPurchased)
                .orderByDesc(ShoppingList::getCreateTime);
 
-        return shoppingListMapper.selectList(wrapper);
+        List<ShoppingList> shoppingList = shoppingListMapper.selectList(wrapper);
+
+        // 加载关联的食材信息
+        for (ShoppingList item : shoppingList) {
+            Ingredient ingredient = ingredientMapper.selectById(item.getIngredientId());
+            item.setIngredient(ingredient);
+        }
+
+        return shoppingList;
     }
 
     @Override

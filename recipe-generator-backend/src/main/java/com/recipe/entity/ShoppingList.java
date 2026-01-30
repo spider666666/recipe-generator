@@ -26,6 +26,9 @@ public class ShoppingList {
 
     private String note;
 
+    @TableField(exist = false)
+    private Ingredient ingredient;
+
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createTime;
 

@@ -262,19 +262,39 @@ const saveComment = () => {
 const addToShopping = async (recipe) => {
   try {
     let addedCount = 0
+    let failedIngredients = []
+
     for (const ing of recipe.ingredients) {
-      // 查找食材ID
-      const ingredientResponse = await searchIngredientByNameAPI(ing.name)
-      if (ingredientResponse.data) {
-        await addShoppingItemAPI({
-          ingredientId: ingredientResponse.data.id,
-          quantity: ing.amount,
-          note: ''
-        })
-        addedCount++
+      try {
+        // 查找食材ID
+        const ingredientResponse = await searchIngredientByNameAPI(ing.name)
+        if (ingredientResponse.data) {
+          await addShoppingItemAPI({
+            ingredientId: ingredientResponse.data.id,
+            quantity: ing.amount,
+            note: ''
+          })
+          addedCount++
+        } else {
+          failedIngredients.push(ing.name)
+        }
+      } catch (err) {
+        console.error(`添加食材 ${ing.name} 失败:`, err)
+        failedIngredients.push(ing.name)
       }
     }
-    ElMessage.success(`已添加 ${addedCount} 种食材到购物清单`)
+
+    if (addedCount > 0) {
+      ElMessage.success(`已添加 ${addedCount} 种食材到购物清单`)
+    }
+
+    if (failedIngredients.length > 0) {
+      ElMessage.warning(`以下食材未找到，无法添加：${failedIngredients.join('、')}`)
+    }
+
+    if (addedCount === 0 && failedIngredients.length === 0) {
+      ElMessage.info('没有可添加的食材')
+    }
   } catch (error) {
     ElMessage.error(error.message || '添加失败')
   }

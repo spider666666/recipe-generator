@@ -64,7 +64,7 @@
                 >
                   <el-checkbox
                     v-model="item.checked"
-                    @change="saveList"
+                    @change="togglePurchaseStatus(item)"
                     size="large"
                   />
 
@@ -145,6 +145,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Download, Delete, EditPen } from '@element-plus/icons-vue'
+import {
+  getShoppingListAPI,
+  updatePurchaseStatusAPI,
+  deleteShoppingItemAPI,
+  clearShoppingListAPI
+} from '../utils/api'
 
 const shoppingList = ref([])
 const newItem = ref({
@@ -166,12 +172,42 @@ const handleNavigate = (event) => {
   }
 }
 
-const loadList = () => {
-  shoppingList.value = JSON.parse(localStorage.getItem('shopping-list') || '[]')
+const loadList = async () => {
+  try {
+    const response = await getShoppingListAPI()
+    if (response.data) {
+      // 转换后端数据格式为前端格式
+      shoppingList.value = response.data.map(item => ({
+        id: item.id,
+        name: item.ingredient?.name || '未知食材',
+        amount: item.quantity,
+        category: item.ingredient?.category || '其他',
+        note: item.note || '',
+        checked: item.isPurchased || false,
+        ingredientId: item.ingredientId
+      }))
+    }
+  } catch (error) {
+    console.error('加载购物清单失败:', error)
+    ElMessage.error('加载购物清单失败')
+  }
 }
 
-const saveList = () => {
-  localStorage.setItem('shopping-list', JSON.stringify(shoppingList.value))
+const saveList = async () => {
+  // 由于后端API不支持批量更新，这里暂时不做处理
+  // 实际的更新会在 togglePurchaseStatus 和 removeItem 中进行
+}
+
+// 切换购买状态
+const togglePurchaseStatus = async (item) => {
+  try {
+    await updatePurchaseStatusAPI(item.id, item.checked)
+  } catch (error) {
+    console.error('更新状态失败:', error)
+    // 恢复原状态
+    item.checked = !item.checked
+    ElMessage.error('更新状态失败')
+  }
 }
 
 // 统计
@@ -197,23 +233,14 @@ const groupedList = computed(() => {
 })
 
 // 添加项目
-const addItem = () => {
+const addItem = async () => {
   if (!newItem.value.name) {
     ElMessage.warning('请输入食材名称')
     return
   }
 
-  shoppingList.value.push({
-    id: Date.now() + Math.random(),
-    name: newItem.value.name,
-    amount: newItem.value.amount,
-    category: newItem.value.category,
-    note: newItem.value.note,
-    checked: false
-  })
-
-  saveList()
-  ElMessage.success('已添加')
+  // 注意：这个功能需要先查找或创建食材，暂时禁用
+  ElMessage.warning('请从菜谱页面添加食材到购物清单')
 
   // 重置表单
   newItem.value = {
@@ -233,11 +260,14 @@ const removeItem = async (id) => {
       type: 'warning'
     })
 
-    shoppingList.value = shoppingList.value.filter(item => item.id !== id)
-    saveList()
+    await deleteShoppingItemAPI(id)
+    await loadList()
     ElMessage.success('已删除')
-  } catch {
-    // 用户取消
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除失败:', error)
+      ElMessage.error('删除失败')
+    }
   }
 }
 
@@ -255,11 +285,14 @@ const clearList = async () => {
       type: 'warning'
     })
 
-    shoppingList.value = []
-    saveList()
+    await clearShoppingListAPI()
+    await loadList()
     ElMessage.success('已清空')
-  } catch {
-    // 用户取消
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('清空失败:', error)
+      ElMessage.error('清空失败')
+    }
   }
 }
 
