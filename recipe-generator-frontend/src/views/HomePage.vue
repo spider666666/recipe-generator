@@ -43,9 +43,10 @@
           <el-tab-pane label="🍚 主食类" name="staple">
             <IngredientGrid :ingredients="ingredientsByCategory.staple" @select="handleSelectIngredient" />
           </el-tab-pane>
-          <el-tab-pane label="🧂 调味料" name="seasoning">
+          <!-- 调味料默认具备，不需要选择 -->
+          <!-- <el-tab-pane label="🧂 调味料" name="seasoning">
             <IngredientGrid :ingredients="ingredientsByCategory.seasoning" @select="handleSelectIngredient" />
-          </el-tab-pane>
+          </el-tab-pane> -->
         </el-tabs>
 
         <!-- 自由输入 -->

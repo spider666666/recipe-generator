@@ -1,13 +1,18 @@
 <template>
   <div class="recipes-page">
+    <div class="title-container">
+      <img src="@/assets/images/厨师猫.png" alt="厨师猫" class="title-cat-left" />
+      <h1 class="page-title">🍳 推荐菜谱</h1>
+      <img src="@/assets/images/厨师猫.png" alt="厨师猫" class="title-cat-right" />
+    </div>
+
     <el-container>
       <el-main>
-        <h1 class="page-title">推荐菜谱</h1>
 
         <div v-if="recipes.length === 0" class="empty-state">
-          <el-empty description="还没有生成菜谱">
-            <el-button type="primary" @click="goToHome">去选择食材</el-button>
-          </el-empty>
+          <img src="@/assets/images/困惑猫.png" alt="困惑猫" class="empty-cat-icon" />
+          <div class="empty-text">还没有生成菜谱喵~</div>
+          <el-button type="primary" @click="goToHome" class="empty-btn">去选择���材</el-button>
         </div>
 
         <div v-else class="recipes-grid">
@@ -64,10 +69,11 @@
                 <el-button type="primary" @click="viewDetail(recipe)">
                   查看详情
                 </el-button>
-                <el-button @click="addToShopping(recipe)">
+                <!-- 购物清单功能暂时隐藏 -->
+                <!-- <el-button @click="addToShopping(recipe)">
                   <el-icon><ShoppingCart /></el-icon>
                   加入购物清单
-                </el-button>
+                </el-button> -->
                 <el-button type="danger" @click="deleteRecipe(recipe)">
                   <el-icon><Delete /></el-icon>
                   删除
@@ -155,19 +161,22 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 背景装饰猫爪 -->
+    <div class="paw-decoration paw-1"></div>
+    <div class="paw-decoration paw-2"></div>
+    <div class="paw-decoration paw-3"></div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Star, StarFilled, ShoppingCart, Download, Delete } from '@element-plus/icons-vue'
+import { Star, StarFilled, Download, Delete } from '@element-plus/icons-vue'
 import {
   addFavoriteAPI,
   removeFavoriteAPI,
   getFavoritesAPI,
-  addShoppingItemAPI,
-  searchIngredientByNameAPI,
   getHistoryAPI,
   deleteRecipeAPI
 } from '../utils/api'
@@ -176,7 +185,6 @@ const recipes = ref([])
 const detailVisible = ref(false)
 const currentRecipe = ref(null)
 const favoriteIds = ref(new Set())
-const addingToCart = ref(new Set())  // 跟踪正在添加到购物车的菜谱ID
 
 onMounted(() => {
   loadRecipes()
@@ -277,88 +285,6 @@ const saveRating = () => {
 // 保存评论（暂时禁用）
 const saveComment = () => {
   ElMessage.info('评论功能开发中，敬请期待')
-}
-
-// 加入购物清单
-const addToShopping = async (recipe) => {
-  // 防止重复点击
-  if (addingToCart.value.has(recipe.id)) {
-    ElMessage.warning('正在添加中，请稍候...')
-    return
-  }
-
-  addingToCart.value.add(recipe.id)
-
-  try {
-    let addedCount = 0
-    let failedIngredients = []
-
-    console.log(`开始添加菜谱 "${recipe.name}" 到购物清单，共 ${recipe.ingredients.length} 种食材`)
-
-    for (const ing of recipe.ingredients) {
-      try {
-        // 优先使用食材ID（如果有的话），避免重复搜索
-        let ingredientId = ing.ingredientId
-
-        console.log(`处理食材: ${ing.name}, ingredientId: ${ingredientId}, amount: ${ing.amount}`)
-
-        // 如果没有ingredientId，则通过名称搜索（向后兼容）
-        if (!ingredientId) {
-          console.log(`食材 ${ing.name} 没有ID，尝试搜索...`)
-          const ingredientResponse = await searchIngredientByNameAPI(ing.name)
-          console.log(`搜索结果:`, ingredientResponse)
-          if (ingredientResponse.data) {
-            ingredientId = ingredientResponse.data.id
-            console.log(`找到食材ID: ${ingredientId}`)
-          } else {
-            console.warn(`搜索食材 ${ing.name} 失败，未找到匹配项`)
-          }
-        }
-
-        if (ingredientId) {
-          console.log(`添加食材 ${ing.name} (ID: ${ingredientId}) 到购物清单`)
-          await addShoppingItemAPI({
-            ingredientId: ingredientId,
-            quantity: ing.amount,
-            note: ''
-          })
-          addedCount++
-          console.log(`成功添加食材 ${ing.name}`)
-        } else {
-          console.error(`食材 ${ing.name} 没有ID，无法添加`)
-          failedIngredients.push(ing.name)
-        }
-      } catch (err) {
-        console.error(`添加食材 ${ing.name} 失败:`, err)
-        console.error('错误详情:', err.response || err.message || err)
-        failedIngredients.push(ing.name)
-      }
-    }
-
-    console.log(`添加完成: 成功 ${addedCount} 个，失败 ${failedIngredients.length} 个`)
-
-    if (addedCount > 0) {
-      if (failedIngredients.length > 0) {
-        ElMessage.warning(`已添加 ${addedCount} 种食材，${failedIngredients.length} 种失败：${failedIngredients.join('、')}`)
-      } else {
-        ElMessage.success(`已添加 ${addedCount} 种食材到购物清单`)
-      }
-    }
-
-    if (failedIngredients.length > 0 && addedCount === 0) {
-      ElMessage.error(`所有食材添加失败：${failedIngredients.join('、')}。请查看控制台了解详情。`)
-    }
-
-    if (addedCount === 0 && failedIngredients.length === 0) {
-      ElMessage.info('没有可添加的食材')
-    }
-  } catch (error) {
-    console.error('添加到购物清单时发生错误:', error)
-    ElMessage.error(error.message || '添加失败')
-  } finally {
-    // 完成后移除标记
-    addingToCart.value.delete(recipe.id)
-  }
 }
 
 // 删除菜谱
@@ -469,35 +395,158 @@ const getDifficultyType = (difficulty) => {
 
 <style scoped>
 .recipes-page {
-  padding: 20px;
+  padding: 30px 20px;
   max-width: 1400px;
   margin: 0 auto;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 50%, rgba(255, 179, 120, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 140, 158, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 40% 20%, rgba(255, 200, 124, 0.08) 0%, transparent 50%),
+    linear-gradient(135deg, #fff8f0 0%, #ffe8f0 50%, #fff5e8 100%);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 标题容器 */
+.title-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 40px;
+  animation: slideDown 0.6s ease-out;
+}
+
+.title-cat-left,
+.title-cat-right {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+.title-cat-right {
+  transform: scaleX(-1);
+  animation-delay: 0.3s;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .page-title {
-  font-size: 32px;
-  font-weight: bold;
+  font-size: 42px;
+  font-weight: 800;
   text-align: center;
-  margin-bottom: 30px;
-  color: #303133;
+  background: linear-gradient(135deg, #ff8c69 0%, #ff6b9d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -1px;
+  margin: 0;
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 空状态 */
 .empty-state {
-  padding: 60px 0;
+  padding: 80px 0;
+  text-align: center;
+  animation: fadeIn 0.6s ease-out;
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.empty-cat-icon {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  margin-bottom: 20px;
+  animation: wiggle 2s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+.empty-text {
+  font-size: 18px;
+  color: #909399;
+  margin-bottom: 24px;
+}
+
+.empty-btn {
+  background: linear-gradient(135deg, #ff8c69 0%, #ff6b9d 100%);
+  border: none;
+  padding: 12px 32px;
+  font-size: 16px;
+  border-radius: 24px;
+  transition: all 0.3s ease;
+}
+
+.empty-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 140, 158, 0.4);
+}
+
+/* 菜谱网格 */
 .recipes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
+  gap: 24px;
+  animation: fadeIn 0.6s ease-out;
 }
 
+/* 菜谱卡片 */
 .recipe-card {
-  transition: transform 0.3s;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 140, 158, 0.15);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .recipe-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(255, 140, 158, 0.25);
+  border-color: rgba(255, 140, 158, 0.3);
+}
+
+.recipe-card :deep(.el-card__header) {
+  background: linear-gradient(135deg, rgba(255, 179, 120, 0.12) 0%, rgba(255, 140, 158, 0.12) 100%);
+  border-bottom: 2px solid rgba(255, 140, 158, 0.2);
+  padding: 18px 20px;
 }
 
 .card-header {
@@ -508,31 +557,43 @@ const getDifficultyType = (difficulty) => {
 
 .recipe-name {
   font-size: 20px;
-  font-weight: bold;
+  font-weight: 700;
   color: #303133;
+  flex: 1;
 }
 
 .recipe-content {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 4px;
 }
 
+/* 标签 */
 .recipe-tags {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
+.recipe-tags :deep(.el-tag) {
+  border-radius: 12px;
+  padding: 6px 14px;
+  font-weight: 500;
+}
+
+/* 食材预览 */
 .ingredients-preview h4 {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   color: #606266;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .ingredient-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .ingredient-item {
@@ -540,50 +601,187 @@ const getDifficultyType = (difficulty) => {
   align-items: center;
   gap: 8px;
   font-size: 14px;
+  padding: 4px 0;
 }
 
 .available {
   color: #67c23a;
+  font-size: 16px;
 }
 
 .missing {
   color: #f56c6c;
+  font-size: 16px;
 }
 
 .more-hint {
   color: #909399;
   font-size: 13px;
   margin-top: 4px;
+  font-style: italic;
 }
 
+/* 操作按钮 */
 .recipe-actions {
   display: flex;
   gap: 10px;
+  margin-top: 4px;
 }
 
 .recipe-actions .el-button {
   flex: 1;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.recipe-actions .el-button--primary {
+  background: linear-gradient(135deg, #ff8c69 0%, #ff6b9d 100%);
+  border: none;
+}
+
+.recipe-actions .el-button--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 140, 158, 0.4);
+}
+
+.recipe-actions .el-button--danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(245, 108, 108, 0.4);
 }
 
 /* 详情弹窗样式 */
+.recipe-dialog :deep(.el-dialog) {
+  border-radius: 16px;
+}
+
 .recipe-detail {
   max-height: 70vh;
   overflow-y: auto;
+  padding: 4px;
+}
+
+.recipe-detail::-webkit-scrollbar {
+  width: 6px;
+}
+
+.recipe-detail::-webkit-scrollbar-thumb {
+  background: rgba(255, 140, 158, 0.3);
+  border-radius: 3px;
+}
+
+.recipe-detail::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 140, 158, 0.5);
 }
 
 .detail-tags {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.detail-tags :deep(.el-tag) {
+  border-radius: 12px;
+  padding: 8px 16px;
+  font-weight: 500;
 }
 
 .detail-section {
-  margin-bottom: 30px;
+  margin-bottom: 32px;
 }
 
 .detail-section h3 {
-  font-size: 18px;
-  margin-bottom: 15px;
+  font-size: 20px;
+  margin-bottom: 16px;
   color: #303133;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-section :deep(.el-table) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.detail-section :deep(.el-steps) {
+  padding: 12px;
+  background: rgba(255, 179, 120, 0.05);
+  border-radius: 12px;
+}
+
+/* 背景装饰猫爪 */
+.paw-decoration {
+  position: fixed;
+  width: 80px;
+  height: 80px;
+  background-image: url('@/assets/images/猫爪.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.paw-1 {
+  top: 15%;
+  left: 5%;
+  transform: rotate(-15deg);
+  animation: float 6s ease-in-out infinite;
+}
+
+.paw-2 {
+  top: 60%;
+  right: 8%;
+  transform: rotate(25deg);
+  animation: float 7s ease-in-out infinite 1s;
+}
+
+.paw-3 {
+  bottom: 20%;
+  left: 10%;
+  transform: rotate(45deg);
+  animation: float 8s ease-in-out infinite 2s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(var(--rotation, 0deg));
+  }
+  50% {
+    transform: translateY(-20px) rotate(var(--rotation, 0deg));
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .recipes-page {
+    padding: 20px 15px;
+  }
+
+  .page-title {
+    font-size: 32px;
+  }
+
+  .title-cat-left,
+  .title-cat-right {
+    width: 45px;
+    height: 45px;
+  }
+
+  .recipes-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .recipe-actions {
+    flex-direction: column;
+  }
+
+  .recipe-actions .el-button {
+    width: 100%;
+  }
 }
 </style>

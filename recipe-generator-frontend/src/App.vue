@@ -21,10 +21,11 @@
         <el-icon><Star /></el-icon>
         <span>收藏夹</span>
       </el-menu-item>
-      <el-menu-item index="shopping">
+      <!-- 购物清单功能暂时隐藏 -->
+      <!-- <el-menu-item index="shopping">
         <el-icon><ShoppingCart /></el-icon>
         <span>购物清单</span>
-      </el-menu-item>
+      </el-menu-item> -->
 
       <!-- 用户信息区域 -->
       <div class="user-section">
@@ -103,7 +104,8 @@ const loadUserInfo = () => {
 
 const handleMenuSelect = (index) => {
   // 如果未登录且访问需要登录的页面，跳转到登录页
-  if (!isLoggedIn.value && ['recipes', 'favorites', 'shopping'].includes(index)) {
+  // 注意：shopping 功能暂时隐藏
+  if (!isLoggedIn.value && ['recipes', 'favorites'].includes(index)) {
     ElMessage.warning('请先登录')
     activeMenu.value = 'login'
     return
